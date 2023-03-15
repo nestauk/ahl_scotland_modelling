@@ -7,12 +7,4 @@
 # exclude /inputs and /outputs/data 
 /inputs/*
 /outputs/*
-
-# exclude archived files
-/Modelling/Archived/*
-
-#exclude robustness checks and alternative years
-/Analysis/alternative_years/*
-/Analysis/pal_robustness/*
-/Modelling/alternative_years/*
-/Modelling/pal_robustness/*
+/notebooks/*

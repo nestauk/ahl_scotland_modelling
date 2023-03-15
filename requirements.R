@@ -1,7 +1,7 @@
 pkgLoad <- function( packages = "favourites" ) {
   
   if( length( packages ) == 1L && packages == "favourites" ) {
-    packages <- c( "tidyverse", "here", "Hmisc", "hrbrthemes", "viridis", "reshape2", "survey", "networkD3", "grid", "gridExtra", "fitdistrplus", "fitur", "actuar", "spatstat", "magrittr", "furrr", "tictoc", "beepr", "devtools"
+    packages <- c( "tidyverse", "here", "Hmisc", "hrbrthemes", "viridis", "reshape2", "survey", "grid", "gridExtra", "spatstat", "magrittr", "furrr", "beepr", "devtools"
     )
   }
   
