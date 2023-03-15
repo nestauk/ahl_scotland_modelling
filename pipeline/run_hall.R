@@ -1,6 +1,6 @@
 require("bw")
 
-source(here("pipeline/find_EI.R"))
+source(here("utils/find_EI.R"))
 
 
 df2019 <- read_csv(here("outputs", "data",  "shs_2019_adult_clean.csv")) %>% 
