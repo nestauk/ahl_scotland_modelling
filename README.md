@@ -4,14 +4,7 @@
 
 This project was built with R version 4.2.1 (2022-06-23) -- "Funny-Looking Kid" and RStudio 2022.07.2+576 "Spotted Wakerobin" Release (e7373ef832b49b2a9b88162cfe7eac5f22c40b34, 2022-09-06) for macOS Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6\_0) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.12.10 Chrome/69.0.3497.128 Safari/537.36
 
-The list of packages needed to run the project is automatically installed by opening and running the script `requirements.R` which automatically checks whether the packages needed for this analysis are installed and if they are not it installs them. This repo relies on the `bw` package which is not currently available on CRAN. To install this package, run the following code.
-
-    if (!require(devtools)){install.packages("devtools")}
-    devtools::install_github("INSP-RH/bw")
-
-For further information about the model there are useful vignettes available by running
-
-    browseVignettes("bw")
+The list of packages needed to run the project is automatically installed by opening and running the script `requirements.R` which automatically checks whether the packages needed for this analysis are installed and if they are not it installs them.
 
 ## Datasets
 

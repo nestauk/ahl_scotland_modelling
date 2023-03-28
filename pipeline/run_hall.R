@@ -2,6 +2,7 @@ require("bw")
 
 source(here("utils/find_EI.R"))
 
+print("This script takes about 30 minutes to run.")
 
 df2019 <- read_csv(here("outputs", "data",  "shs_2019_adult_clean.csv")) %>% 
   filter(!is.na(int_wt) & bmi > 0) %>% 
@@ -28,6 +29,7 @@ findEI_by_year <- function(year){
     # split data by bmi class
     dat_split <- split(dat, dat$bmi_class_c)
     
+    print("Running obese sample")
     list(id = dat_split$obese$id,
                        bw = dat_split$obese$wt,
                        ht = dat_split$obese$ht/100,
@@ -39,6 +41,7 @@ findEI_by_year <- function(year){
                        pal = 1.6) %>% 
       pmap_dfr(., find_EI) %T>% write_csv(here(paste0("outputs/data/obese_", year, ".csv")) )
     
+    print("Running overweight sample")
     list(id = dat_split$overweight$id,
                   bw = dat_split$overweight$wt,
                   ht = dat_split$overweight$ht/100,
@@ -49,7 +52,8 @@ findEI_by_year <- function(year){
                   ei_limit = 1000,
                   pal = 1.6) %>% 
       pmap_dfr(., find_EI) %T>% write_csv(here(paste0("outputs/data/overweight_", year, ".csv"))) 
-    
+  
+   print("Running morbidly obese sample")
    list(id = dat_split$`morbidly obese`$id,
                  bw = dat_split$`morbidly obese`$wt,
                  ht = dat_split$`morbidly obese`$ht/100,
@@ -63,9 +67,12 @@ findEI_by_year <- function(year){
   
 }
 
-
+print("Running 1995 data")
 findEI_by_year(1995)
+print("Running 1998 data")
 findEI_by_year(1998)
+print("Running 2003 data")
 findEI_by_year(2003)
+print("Running 2012 data")
 findEI_by_year(2012)
 

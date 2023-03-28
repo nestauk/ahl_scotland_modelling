@@ -4,7 +4,7 @@
 .Ruserdata
 .DS_Store
 
-# exclude /inputs and /outputs/data 
-/inputs/*
-/outputs/*
+# exclude files within /inputs/data and /outputs/data 
+/inputs/data/*
+/outputs/data/*
 /notebooks/*
