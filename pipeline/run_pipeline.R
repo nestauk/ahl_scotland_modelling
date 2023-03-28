@@ -1,0 +1,5 @@
+library(here)
+source(here("pipeline/obesity_trend.R"))
+source(here("pipeline/equating.R"))
+source(here("pipeline/run_hall.R"))
+source(here("pipeline/extrapolate.R"))
