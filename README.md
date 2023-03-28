@@ -28,12 +28,8 @@ For internal Nesta users the files are saved in the S3 bucket [ahl-scotland-mode
 To run this project please ensure that all packages are installed by following the instructions in the Requirements section. After that follow these steps:
 
 -   In the `data_processing` folder open and run the file `read_clean_save_scotland.R` (further info in the README of this folder)
--   In the `pipeline` folder run the files in this order:
-    -   `equating.R`
+-   In the `pipeline` folder run the files `run_pipeline.R`
 
-    -   `run_hall.R`
-
-    -   `extrapolate.R`
 
 All outputs are saved in the `outputs` folder (`data`, `reports`, and `figures`).
 
