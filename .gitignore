@@ -12,5 +12,6 @@
 /notebooks/*
 
 !/inputs/data/.gitkeep
-/outputs/data/.gitkeep
-/outputs/figures/.gitkeep
+!/outputs/data/.gitkeep
+!/outputs/figures/.gitkeep
+
