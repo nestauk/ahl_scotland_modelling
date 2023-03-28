@@ -37,6 +37,28 @@ To run this project please ensure that all packages are installed by following t
 
 All outputs are saved in the `outputs` folder (`data`, `reports`, and `figures`).
 
+## Directory
+
+```
+  ├── ahl_scotland_modelling                
+  │   ├── data_processing
+  │   │   ├── read_clean_save_scotland.R    <- Pre-processing of data
+  │   │   ...
+  │   ├── pipeline                          <- Holds scripts for all pipeline components
+  │   ├── utils                             <- Utility functions needed across different parts of the codebase
+  │   ...
+  ├── inputs
+  │   └── data                              <- Holds the Scottish Health Survey Data
+  │   ...
+  └── outputs
+      ├── data                              <- Holds cleaned data
+      ├── reports                           <- Summary tables are saved here
+      ├── figures                   
+      ├── └── png                           <- Charts are saved here
+      ...
+
+```
+
 ## Ackowledgements
 
 This project relies on the `bw` package which was developed by researchers at the [National Institute of Public Health of Mexico](https://www.insp.mx/insp-overview.html), to which we are really grateful. The package implements the [Dynamic Weight Change model from Hall et al. (2011)](https://pubmed.ncbi.nlm.nih.gov/21872751/) for adults.
