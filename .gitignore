@@ -8,4 +8,9 @@
 # exclude files within /inputs/data and /outputs/data 
 /inputs/data/*
 /outputs/data/*
+/outputs/figures/*
 /notebooks/*
+
+!/inputs/data/.gitkeep
+!/outputs/data/.gitkeep
+!/outputs/figures/.gitkeep
