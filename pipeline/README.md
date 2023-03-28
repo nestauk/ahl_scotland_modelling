@@ -1,4 +1,3 @@
-
 # Pipeline
 
 To run the pipeline in full run the script `run_pipeline.R`. This script reads the other files in this folder and runs them in one go: 
