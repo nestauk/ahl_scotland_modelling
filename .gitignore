@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+# exclude /inputs and /outputs/data 
+/inputs/*
+/outputs/*
+/notebooks/*
