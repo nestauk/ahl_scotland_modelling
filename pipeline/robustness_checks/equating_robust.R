@@ -1,3 +1,5 @@
+rm(list = ls())
+
 library(Hmisc)
 library(reshape2)
 library(magrittr)
@@ -27,10 +29,10 @@ equating <- function(old_year){
                         weights=df2019$int_wt)
   
   svy_old <- svydesign(ids=~dfold$psu, 
-                        nest = T,
-                        data=dfold,
-                        strata = dfold$strata,
-                        weights=dfold$int_wt)
+                       nest = T,
+                       data=dfold,
+                       strata = dfold$strata,
+                       weights=dfold$int_wt)
   
   prop_a <- prop.table(svytable(~bmi_class_c,svy_2019)) %>% as.data.frame()
   
@@ -68,6 +70,6 @@ equating <- function(old_year){
   
 }
 
-for (x in c(1995, 1998, 2003, 2008, 2011, 2012, 2013)) {
+for (x in c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018)) {
   equating(x) %T>% write_csv(here(paste0("outputs/reports/weight_change_table_mean_", x,".csv")))
 }
