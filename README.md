@@ -41,6 +41,7 @@ All outputs are saved in the `outputs` folder (`data`, `reports`, and `figures`)
   │   │   ├── read_clean_save_scotland.R    <- Pre-processing of data
   │   │   ...
   │   ├── pipeline                          <- Holds scripts for all pipeline components
+  |   |   ├── robustness_checks 
   │   ├── utils                             <- Utility functions needed across different parts of the codebase
   │   ...
   ├── inputs
