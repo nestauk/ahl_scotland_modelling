@@ -56,7 +56,7 @@ proj <- read_csv(here("inputs", "data", "pop-proj-2020-profile-custom.csv")) %>%
   melt(., id.vars = c("Variant", "Year", "Sex")) %>% 
   mutate(age = gsub("Age_", "", variable))
 
-# adult data
+# adult population projection data
 over16_proj <- rbind(proj %>% 
                        filter(! age %in%  c(0,1,2,3,4,5,6,7,8,9,10,11,12,12,13,14,15)) %>% 
                        group_by(Year, Sex) %>% 
@@ -66,6 +66,25 @@ over16_proj <- rbind(proj %>%
                        group_by(Year) %>% 
                        summarise(over16_proj = sum(value)) %>% 
                        mutate(Sex = "Persons"))
+
+# population data (mid year population estimates)
+
+pop <- read_excel(here("inputs", "data", "mid-year-pop-est-21-time-series-data.xlsx"), sheet = "Table_6", range = "A6:CP129") 
+
+# adult data
+over16 <- pop %>% 
+  select(- `All Ages`) %>% 
+  melt(., id.vars = c("Year", "Sex")) %>% 
+  filter(! variable %in%  c(0,1,2,3,4,5,6,7,8,9,10,11,12,12,13,14,15)) %>% 
+  group_by(Year, Sex) %>% 
+  summarise(over16 = sum(value))
+
+
+# all population
+
+all_adult <- rbind(over16 %>% rename(.over16 = over16) %>% filter(Year < 2020),
+                   over16_proj %>% rename(.over16 = over16_proj)) %>% 
+  filter(Sex == "Persons")
 
 
 # read population by imd
@@ -77,42 +96,45 @@ stack_imd_adults <- function(x){
     select(- `Total`) %>% 
     melt(., id.vars = c("Decile", "Sex")) %>% 
     mutate(age = parse_number(as.character(variable))) %>% 
-    filter(! age %in%  c(0,1,2,3,4,5,6,7,8,9,10,11,12,12,13,14,15)) %>% 
-    group_by(Decile, Sex) %>% 
+    filter(! age %in%  c(0,1,2,3,4,5,6,7,8,9,10,11,12,12,13,14,15)) %>%  
+    mutate(imd = case_when(Decile %in% c(1,2) ~ 1,
+                           Decile %in% c(3,4) ~ 2,
+                           Decile %in% c(5,6) ~ 3,
+                           Decile %in% c(7,8) ~ 4,
+                           Decile %in% c(9,10) ~ 5)) %>% 
+    group_by(imd, Sex) %>% 
     summarise(over16 = sum(value))
 }
 
-all_imd_stacked <- do.call("rbind", map2(lapply(all_imd, stack_imd_adults), seq(2008, 2019, 1), ~cbind(.x, Year = .y))) %>% 
-  mutate(imd = case_when(Decile %in% c(1,2) ~ 1,
-                         Decile %in% c(3,4) ~ 2,
-                         Decile %in% c(5,6) ~ 3,
-                         Decile %in% c(7,8) ~ 4,
-                         Decile %in% c(9,10) ~ 5))
+
+all_imd_stacked <- do.call("rbind", map2(lapply(all_imd, stack_imd_adults), seq(2008, 2019, 1), ~cbind(.x, Year = .y)))
+
+
+imd_2019 <- stack_imd_adults(read_excel(here("inputs", "data", "simd-21-tab1.xlsx"), sheet = 21, range = "A4:CP34")) %>% 
+  rename(y2019_imd = over16)
+
 
 # projection of trends in IMD
+
+
+year_trend <- all_adult %>% 
+  ungroup() %>% 
+  left_join(all_adult %>% 
+              ungroup() %>% 
+              filter(Year == 2019) %>% 
+              rename(y2019 = .over16) %>% 
+              select(Sex, y2019), by = "Sex") %>% 
+  mutate(change = (.over16/y2019 - 1)) %>% 
+  filter(Year > 2019)
+  
 # to be confirmed when NAOMI replies
 
-dat_imd <- merge(all_imd_stacked %>% 
-                   filter(Sex == "Persons"),
-                 all_imd_stacked %>% 
-                   filter(Sex == "Persons") %>% 
-                   group_by(Year) %>% 
-                   summarise(sum = sum(over16)),
-                 by = c( "Year")) %>% 
-  mutate(.Freq = over16/sum)
-
 # data for prediction
-new_imd <- expand.grid(Year = seq(2020,2030, 1), imd = seq(1,5,1))
-
-# regression
-
-mod <- lm(.Freq ~ Year*as.factor(imd), dat_imd)
-
-summary(mod)
-
-over16_proj_imd <- cbind(new_imd, .over16 = predict(mod, new_imd)) %>% 
-  merge(., over16_proj %>% filter(Sex == "Persons") %>% distinct(Year, over16_proj), by = "Year") %>% 
-  mutate(over16_imd = over16_proj*.over16)
+over16_proj_imd <- expand.grid(Year = seq(2020,2030, 1), imd = seq(1,5,1)) %>% 
+  merge(year_trend, by = "Year") %>% 
+  merge(imd_2019, by = c("imd", "Sex")) %>% 
+  mutate(over16_imd = (1 + change)*y2019_imd) %>% 
+  select(imd, Sex, Year, over16_imd)
 
 
 # combine datasets to get prevalence given a bmi class by imd
@@ -129,7 +151,7 @@ get_prevalence_adult_imd <- function(bmi_class){
     mutate(Freq = .Freq/.Freq_all) %>% 
     mutate(Sex = "Persons") %>% 
     filter(bmi_class_c == bmi_class)  %>% 
-    merge(all_imd_stacked, by.x = c("Year", "imd", "Sex"), by.y = c("Year", "Decile", "Sex")) %>% 
+    merge(all_imd_stacked, by.x = c("Year", "imd", "Sex"), by.y = c("Year", "imd", "Sex")) %>% 
     mutate(prevalence = over16*Freq) %>% 
     mutate(Year = as.numeric(Year)) %>% 
     select(Year, Sex, imd, prevalence)
