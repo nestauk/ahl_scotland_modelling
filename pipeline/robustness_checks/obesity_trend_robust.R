@@ -1,3 +1,5 @@
+rm(list = ls())
+
 library(tidyverse)
 library(here)
 library(survey)
@@ -33,9 +35,10 @@ svy.dat <- svydesign(ids=~df_clean$psu,
 
 prevalence <- prop.table(svytable(~year_c + bmi_class_c,svy.dat),1)
 
-
 prevalence %>% 
   as.data.frame() %>% 
-  filter(bmi_class_c == "obese" & Freq <= prevalence[45]) %>% 
+  filter(bmi_class_c == "obese") %>% 
+  mutate(chosen = ifelse(year_c %in% c(1995, 1998, 2003, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019),2,0)) %>% 
+  filter(chosen == 2) %>% 
   mutate(rel_freq = 1 - Freq/prevalence[45]) %T>% 
-  write_csv(here("outputs/reports/obesity_change.csv"))
+  write_csv(here("outputs/reports/obesity_change_robust.csv"))

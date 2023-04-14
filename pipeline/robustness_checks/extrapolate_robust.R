@@ -24,12 +24,12 @@ df2019 <- read_csv(here("outputs", "data",  "shs_2019_adult_clean.csv")) %>%
 
 # define years that will be used
 
-years <- c(1995, 1998, 2003, 2008, 2011, 2012, 2013)
-
+years <- c(1995, 1998, 2003, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018)
 
 # mean weight change
 
 weight_change <- lapply(list.files(here("outputs", "reports"), "weight_change", full.names = T), read_csv)
+
 
 names(weight_change) <- paste0("wc_", years)
 
@@ -83,115 +83,117 @@ names(all_full) <- paste0("full_", years)
 
 make_avg_ei <- function(year, class, sex_value){
   df2019 <- df2019 %>% mutate(intake = pal*rmr)
-
+  
   svy_2019 <- svydesign(ids = ~df2019$psu,
-                      nest = T,
-                      data = df2019,
-                      strata = df2019$strata,
-                      weights = df2019$int_wt)
-
+                        nest = T,
+                        data = df2019,
+                        strata = df2019$strata,
+                        weights = df2019$int_wt)
+  
   group_2019 <- subset(svy_2019, bmi_class_c %in% class & sex == sex_value)
-
+  
   current_ei <- svymean(~intake, group_2019)[[1]]
   
   year_dat <- all_full[[paste0("full_", year)]]
-
+  
   svy_full <- svydesign(ids = ~year_dat$psu,
-                      nest = T,
-                      data = year_dat,
-                      strata = year_dat$strata,
-                      weights = year_dat$int_wt)
-
+                        nest = T,
+                        data = year_dat,
+                        strata = year_dat$strata,
+                        weights = year_dat$int_wt)
+  
   group_full <- subset(svy_full, bmi_class_c %in% class & sex == sex_value)
-
+  
   rbind(svyby(~intake_end, ~year_model, group_full, svymean ) %>% 
-    as.data.frame() %>% 
-    select(year_model, intake_end),
-    data.frame(year_model = 2019, intake_end = current_ei))
+          as.data.frame() %>% 
+          select(year_model, intake_end),
+        data.frame(year_model = 2019, intake_end = current_ei))
 }
 
 # overweight female
 scenario_over_female <- do.call("rbind", mapply(make_avg_ei, 
-                                         years, 
-                                         MoreArgs = list(class = "overweight", sex_value = "female"), 
-                                         SIMPLIFY = F) ) %>% distinct()
+                                                years, 
+                                                MoreArgs = list(class = "overweight", sex_value = "female"), 
+                                                SIMPLIFY = F) ) %>% distinct()
 
 # overweight male
 scenario_over_male <- do.call("rbind", mapply(make_avg_ei, 
-                                                years, 
-                                                MoreArgs = list(class = "overweight", sex_value = "male"), 
-                                                SIMPLIFY = F) ) %>% distinct()
+                                              years, 
+                                              MoreArgs = list(class = "overweight", sex_value = "male"), 
+                                              SIMPLIFY = F) ) %>% distinct()
 
 # obese female
 scenario_obese_female <- do.call("rbind", mapply(make_avg_ei, 
-                                          years, 
-                                          MoreArgs = list(class = "obese", sex_value = "female"), 
-                                          SIMPLIFY = F) ) %>% distinct()
+                                                 years, 
+                                                 MoreArgs = list(class = "obese", sex_value = "female"), 
+                                                 SIMPLIFY = F) ) %>% distinct()
 
 # obese male
 scenario_obese_male <- do.call("rbind", mapply(make_avg_ei, 
-                                                 years, 
-                                                 MoreArgs = list(class = "obese", sex_value = "male"), 
-                                                 SIMPLIFY = F) ) %>% distinct()
+                                               years, 
+                                               MoreArgs = list(class = "obese", sex_value = "male"), 
+                                               SIMPLIFY = F) ) %>% distinct()
 
 # morbidly obese female
 scenario_morb_female <- do.call("rbind", mapply(make_avg_ei, 
-                                         years, 
-                                         MoreArgs = list(class = "morbidly obese", sex_value = "female"),
-                                         SIMPLIFY = F) ) %>% distinct()
+                                                years, 
+                                                MoreArgs = list(class = "morbidly obese", sex_value = "female"),
+                                                SIMPLIFY = F) ) %>% distinct()
 
 # morbidly obese male
 scenario_morb_male <- do.call("rbind", mapply(make_avg_ei, 
-                                                years, 
-                                                MoreArgs = list(class = "morbidly obese", sex_value = "male"),
-                                                SIMPLIFY = F) ) %>% distinct()
+                                              years, 
+                                              MoreArgs = list(class = "morbidly obese", sex_value = "male"),
+                                              SIMPLIFY = F) ) %>% distinct()
 
 # excess female
 scenario_excess_female <- do.call("rbind", mapply(make_avg_ei, 
-                                           years, 
-                                           MoreArgs = list(class = c("overweight","obese", "morbidly obese"), sex_value = "female"), 
-                                           SIMPLIFY = F) ) %>% distinct()
+                                                  years, 
+                                                  MoreArgs = list(class = c("overweight","obese", "morbidly obese"), sex_value = "female"), 
+                                                  SIMPLIFY = F) ) %>% distinct()
 
 # excess male
 scenario_excess_male <- do.call("rbind", mapply(make_avg_ei, 
-                                                  years, 
-                                                  MoreArgs = list(class = c("overweight","obese", "morbidly obese"), sex_value = "male"), 
-                                                  SIMPLIFY = F) ) %>% distinct()
+                                                years, 
+                                                MoreArgs = list(class = c("overweight","obese", "morbidly obese"), sex_value = "male"), 
+                                                SIMPLIFY = F) ) %>% distinct()
 
 # pop female
 scenario_pop_female <- do.call("rbind", mapply(make_avg_ei, 
-                                                  years, 
-                                                  MoreArgs = list(class = c("underweight","normal" , "overweight","obese", "morbidly obese"), sex_value = "female"), 
-                                                  SIMPLIFY = F) ) %>% distinct()
+                                               years, 
+                                               MoreArgs = list(class = c("underweight","normal" , "overweight","obese", "morbidly obese"), sex_value = "female"), 
+                                               SIMPLIFY = F) ) %>% distinct()
 
 # pop male
 scenario_pop_male <- do.call("rbind", mapply(make_avg_ei, 
-                                                years, 
-                                                MoreArgs = list(class = c("underweight","normal", "overweight","obese", "morbidly obese"), sex_value = "male"), 
-                                                SIMPLIFY = F) ) %>% distinct()
+                                             years, 
+                                             MoreArgs = list(class = c("underweight","normal", "overweight","obese", "morbidly obese"), sex_value = "male"), 
+                                             SIMPLIFY = F) ) %>% distinct()
 
 
 #############
 
 
-year_trend <- read_csv(here("outputs/reports/obesity_change.csv"))
+year_trend <- read_csv(here("outputs/reports/obesity_change_robust.csv"))
 
 
 make_pred_table <- function(scenario_df, thresholds =c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)){
   plot_df <- merge(scenario_df, year_trend, by.x = "year_model", by.y = "year_c")
   mod <- lm(intake_end ~ rel_freq, plot_df)
-
+  
   extra <- data.frame(rel_freq = seq(0, 0.5, 0.01))
-
+  
   pred <- data.frame(pred = predict(mod, extra), extra) %>% 
     filter(rel_freq %in% c(0, thresholds))
-
+  
   pred$base <- pred[which(pred$rel_freq == 0),1]
-
+  
   pred$diff <- pred$pred - pred$base
-
+  
   pred$pp <- pred$diff/pred$base
-
+  
+  pred$rel_freq <- ordered(label_percent()(pred$rel_freq), levels = c("0%","5%", "10%", "20%", "30%", "40%", "50%"))
+  
   return(pred)
 }
 
@@ -207,109 +209,96 @@ reports <- lapply(sc, make_pred_table)
 # save reports
 
 for (i in 1:length(reports)){
-  write_csv(reports[[i]], here("outputs", "reports", paste0(names(reports)[i], '.csv')))
+  write_csv(reports[[i]], here("outputs", "reports", paste0(names(reports)[i], '_robust_.csv')))
 }
 
 
 # plots
 
-png(here("outputs", "figures", "png", "overweight.png"), units = "px", width = 1000, height = 600, res = 100)
+png(here("outputs", "figures", "png", "overweight_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 grid.arrange(
   make_pred_table(scenario_over_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Overweight Female", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   make_pred_table(scenario_over_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Overweight Male", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   nrow = 1)
 dev.off()
 
-png(here("outputs", "figures", "png", "obese.png"), units = "px", width = 1000, height = 600, res = 100)
+png(here("outputs", "figures", "png", "obese_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 grid.arrange(
   make_pred_table(scenario_obese_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Obese Female", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   make_pred_table(scenario_obese_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Obese Male", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   nrow = 1)
 dev.off()
 
-png(here("outputs", "figures", "png", "morbidly_obese.png"), units = "px", width = 1000, height = 600, res = 100)
+png(here("outputs", "figures", "png", "morbidly_obese_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 grid.arrange(
   make_pred_table(scenario_morb_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Morbidly Obese Female", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   make_pred_table(scenario_morb_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Morbidly Obese Male", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   nrow = 1)
 dev.off()
 
-png(here("outputs", "figures", "png", "excess_weight.png"), units = "px", width = 1000, height = 600, res = 100)
+png(here("outputs", "figures", "png", "excess_weight_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 grid.arrange(
   make_pred_table(scenario_excess_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Excess Weight Female", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   make_pred_table(scenario_excess_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Excess Weight Male", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   nrow = 1)
 dev.off()
 
-png(here("outputs", "figures", "png", "population.png"), units = "px", width = 1000, height = 600, res = 100)
+png(here("outputs", "figures", "png", "population_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 grid.arrange(
   make_pred_table(scenario_pop_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Population Female", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   make_pred_table(scenario_pop_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
     ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
     geom_bar(stat = "identity", fill = "#0000ff") +
-    ylim(-600,0) +
     geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
     geom_text(aes(x = as.factor(rel_freq), label = round(diff,0)), vjust= -1 , color = "white") +
     labs(title = "Population Male", x = "Obesity Prevalence Reduction", y = "kcal/day reduction"),
   nrow = 1)
 dev.off()
-
-library(gganimate)
-
 
 # example plots
 
@@ -319,7 +308,7 @@ plot_df %>%
   ggplot(., aes(x = rel_freq, y = intake_end)) + 
   geom_point() + 
   geom_smooth(method = "lm", formula = "y ~ x") +
-  ggtitle("Example: obese men")
+  labs(title = "Example: obese men", y = "kcal/day", x = "Obesity Prevalence")
 
 mod <- lm(intake_end ~ rel_freq, plot_df)
 
@@ -331,7 +320,8 @@ pred %>%
   ggplot(., aes(x = rel_freq, y = pred)) + 
   geom_point() + 
   geom_smooth(method = "lm", formula = "y ~ x") +
-  ggtitle("Example: obese men")
+  labs(title = "Example: obese men", y = "kcal/day", x = "Obesity Prevalence")
+
 
 ################################################################
 
@@ -353,23 +343,23 @@ make_by_edi <- function(year, class, sex_value, edi){
   by_edi <- function(edi_value){
     
     group_2019 <- subset(svy_2019, eval(expr(bmi_class_c %in% class & sex == sex_value & !! ensym(edi) == edi_value)))
-  
+    
     current_ei <- svymean(~intake, group_2019)[[1]]
-  
+    
     year_dat <- all_full[[paste0("full_", year)]]
-  
+    
     svy_full <- svydesign(ids = ~year_dat$psu,
-                        nest = T,
-                        data = year_dat,
-                        strata = year_dat$strata,
-                        weights = year_dat$int_wt)
-  
+                          nest = T,
+                          data = year_dat,
+                          strata = year_dat$strata,
+                          weights = year_dat$int_wt)
+    
     group_full <- subset(svy_full, eval(expr(bmi_class_c %in% class & sex == sex_value & !! ensym(edi) == edi_value)))
-  
+    
     out <- rbind(svyby(~intake_end, ~year_model, group_full, svymean ) %>% 
-          as.data.frame() %>% 
-          select(year_model, intake_end),
-          data.frame(year_model = 2019, intake_end = current_ei)) 
+                   as.data.frame() %>% 
+                   select(year_model, intake_end),
+                 data.frame(year_model = 2019, intake_end = current_ei)) 
     
     out[[edi]] <-  edi_value
     
@@ -389,13 +379,13 @@ make_pred_table_by_edi <- function(scenario, edi, thr){
   df_list <- group_split(df_split) %>% set_names(unlist(group_keys(df_split))) 
   
   df_table <- lapply(df_list, make_pred_table, thresholds = thr)
-
+  
   tst <- do.call("rbind", df_table)
   
   tst[[edi]] <- substr(rownames(tst),1,1)
-
+  
   return(tst)
-  }
+}
 
 # edi
 
@@ -430,28 +420,29 @@ imd_prop_female <- svytable(~bmi_class_c + imd, female_2019) %>%
 options(scipen = 999)
 
 scenario_obese_female <- do.call("rbind", mapply(make_by_edi, 
-                                                years, 
-                                                MoreArgs = list(class = "obese", sex_value = "female", edi = "imd"), 
-                                                SIMPLIFY = F) ) %>% distinct()
+                                                 years, 
+                                                 MoreArgs = list(class = "obese", sex_value = "female", edi = "imd"), 
+                                                 SIMPLIFY = F) ) %>% distinct()
 
 ggplot(imd_prop_female, aes(x = imd, y=share)) + 
   geom_bar(stat = "identity") +
   geom_text(aes(x = imd, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese women")
 
+png(here("outputs", "figures", "png", "imd_obese_female_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_female, edi = "imd", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., imd_prop_female, by = "imd") %>% 
   mutate(tot = female_ob,
          share_imd = tot*share,
          kcal_share = share_imd * diff) %>% 
   ggplot(., aes(x = imd, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity",fill = "#0000ff") +
   geom_text(aes(x = as.factor(imd), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(imd), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Female")
-
+  labs(title = "Obese Female", y = "Total kcal to be reduced", x = "SIMD")
+dev.off()
 
 make_pred_table_by_edi(scenario_obese_female, edi = "imd", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -472,40 +463,29 @@ imd_prop_male <- svytable(~bmi_class_c + imd, male_2019) %>%
 options(scipen = 999)
 
 scenario_obese_male <- do.call("rbind", mapply(make_by_edi, 
-                                                 years, 
-                                                 MoreArgs = list(class = "obese", sex_value = "male", edi = "imd"), 
-                                                 SIMPLIFY = F) ) %>% distinct()
+                                               years, 
+                                               MoreArgs = list(class = "obese", sex_value = "male", edi = "imd"), 
+                                               SIMPLIFY = F) ) %>% distinct()
 
 ggplot(imd_prop_male, aes(x = imd, y=share)) + 
   geom_bar(stat = "identity") +
   geom_text(aes(x = imd, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Male")
 
+png(here("outputs", "figures", "png", "imd_obese_male_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_male, edi = "imd", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., imd_prop_male, by = "imd") %>% 
   mutate(tot = male_ob,
          share_imd = tot*share,
          kcal_share = share_imd * diff) %>% 
   ggplot(., aes(x = imd, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity",fill = "#0000ff") +
   geom_text(aes(x = as.factor(imd), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(imd), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Male")
-
-make_pred_table_by_edi(scenario_obese_male, edi = "imd", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
-  merge(., imd_prop %>% filter(sex == "male"), by = "imd") %>% 
-  mutate(tot = male_ob,
-         share_imd = tot*share,
-         kcal_share = share_imd * diff) %>% 
-  ggplot(., aes(x = imd, y = kcal_share)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(x = as.factor(imd), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
-  geom_text(aes(x = as.factor(imd), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
-  scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Male")
+  labs(title = "Obese Male", y = "Total kcal to be reduced", x = "SIMD")
+dev.off()
 
 make_pred_table_by_edi(scenario_obese_male, edi = "imd", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -537,19 +517,21 @@ ggplot(income_prop_female, aes(x = eqv_income, y=share)) +
   geom_text(aes(x = eqv_income, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Female")
 
+png(here("outputs", "figures", "png", "income_obese_female_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_female, edi = "eqv_income", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., income_prop_female, by = "eqv_income") %>% 
   mutate(tot = female_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = eqv_income, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity",fill = "#0000ff") +
   geom_text(aes(x = as.factor(eqv_income), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(eqv_income), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Female")
-
+  scale_x_discrete(labels = c("Top Q \n >=£52388", "2nd Q \n >=£33735 \n <£52388", "3rd Q \n >=£23214 \n <£33735", "4th Q \n >=£14444 \n <£23214", "Bottom Q \n <£14444")) +
+  labs(title = "Obese Female", y = "Total kcal to be reduced", x = "Income")
+dev.off()
 
 make_pred_table_by_edi(scenario_obese_female, edi = "eqv_income", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -577,19 +559,21 @@ ggplot(income_prop_male, aes(x = eqv_income, y=share)) +
   geom_text(aes(x = eqv_income, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Male")
 
+png(here("outputs", "figures", "png", "income_obese_male_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_male, edi = "eqv_income", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., income_prop_male, by = "eqv_income") %>% 
   mutate(tot = male_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = eqv_income, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(eqv_income), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(eqv_income), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Male")
-
+  scale_x_discrete(labels = c("Top Q \n >=£52388", "2nd Q \n >=£33735 \n <£52388", "3rd Q \n >=£23214 \n <£33735", "4th Q \n >=£14444 \n <£23214", "Bottom Q \n <£14444")) +
+  labs(title = "Obese Male", y = "Total kcal to be reduced", x = "Income")
+dev.off()
 
 make_pred_table_by_edi(scenario_obese_male, edi = "eqv_income", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -603,15 +587,22 @@ make_pred_table_by_edi(scenario_obese_male, edi = "eqv_income", thr = c(0.05, 0.
 
 # distribution in the population
 
+edu_lab <- c("Degree or higher", "HNC/D", "Higher Grade", "Standard Grade", "Other", "No qual")
+
+png(here("outputs", "figures", "png", "educ_distribution.png"), units = "px", width = 1000, height = 600, res = 100)
 svytable(~educ, svy_2019) %>% 
   as.data.frame() %>% 
   filter(as.numeric(as.character(educ)) > 0) %>% 
-  mutate(educ = fct_reorder(educ,desc(educ))) %>% 
+  mutate(educ = fct_reorder(educ,as.numeric(as.character(educ)))) %>% 
   mutate(share = Freq/sum(Freq)) %>% 
   ggplot(., aes(x = educ, y =share)) +
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(educ), label = label_percent(accuracy = 0.01)(share)) , hjust = 1,  color = "white") +
+  scale_x_discrete(labels = edu_lab) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Education Level Distribution", x = "Education Level", y = "") +
   coord_flip() 
+dev.off()
 
 # obese female
 
@@ -631,18 +622,22 @@ ggplot(educ_prop_female, aes(x = educ, y=share)) +
   geom_text(aes(x = educ, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Female")
 
+png(here("outputs", "figures", "png", "educ_obese_female_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_female, edi = "educ", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., educ_prop_female, by = "educ") %>% 
   mutate(tot = female_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = educ, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(educ), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(educ), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Female")
+  scale_x_discrete(labels = edu_lab) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Obese Female",  y = "Total kcal to be reduced", x = "Education level")
+dev.off()
 
 make_pred_table_by_edi(scenario_obese_female, edi = "educ", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -671,19 +666,22 @@ ggplot(educ_prop_male, aes(x = educ, y=share)) +
   geom_text(aes(x = educ, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Male")
 
+png(here("outputs", "figures", "png", "educ_obese_male_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_male, edi = "educ", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., educ_prop_male, by = "educ") %>% 
   mutate(tot = male_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = educ, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(educ), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(educ), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Male")
-
+  scale_x_discrete(labels = edu_lab) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Obese Male",  y = "Total kcal to be reduced", x = "Education level")
+dev.off()
 
 
 make_pred_table_by_edi(scenario_obese_male, edi = "educ", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
@@ -700,16 +698,23 @@ make_pred_table_by_edi(scenario_obese_male, edi = "educ", thr = c(0.05, 0.1, 0.2
 
 # distribution in the population
 
+ethnic_lab <- c("White Scottish", "White British", "White Other", "Asian", "Other Minority Ethnic")
+
+
+png(here("outputs", "figures", "png", "ethnic_distribution.png"), units = "px", width = 1000, height = 600, res = 100)
 svytable(~ethnic, svy_2019) %>% 
   as.data.frame() %>% 
   filter(as.numeric(as.character(ethnic)) > 0) %>% 
-  mutate(ethnic = fct_reorder(ethnic,desc(ethnic))) %>% 
+  mutate(ethnic = fct_reorder(ethnic,as.numeric(as.character(ethnic)))) %>% 
   mutate(share = Freq/sum(Freq)) %>% 
   ggplot(., aes(x = ethnic, y =share)) +
-  geom_bar(stat = "identity") + 
-  ylim(0,1) +
+  geom_bar(stat = "identity", fill = "#0000ff") + 
+  scale_x_discrete(labels = ethnic_lab) +
+  scale_y_continuous(labels = scales::percent) +
   geom_text(aes(x = as.factor(ethnic), label = label_percent(accuracy = 0.01)(share)) , hjust = -0.1,  color = "black") +
+  labs(title = "Ethnic Groups Distribution", x = "Ethnic Group", y = "") +
   coord_flip() 
+dev.off()
 
 # obese female
 
@@ -729,18 +734,23 @@ ggplot(ethnic_prop_female, aes(x = ethnic, y=share)) +
   geom_text(aes(x = ethnic, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Female")
 
+png(here("outputs", "figures", "png", "ethnic_obese_female_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_female, edi = "ethnic", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., ethnic_prop_female, by = "ethnic") %>% 
   mutate(tot = female_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = ethnic, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(ethnic), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(ethnic), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Female")
+  scale_x_discrete(labels = ethnic_lab) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Obese Female",  y = "Total kcal to be reduced", x = "Ethnic Group")
+dev.off()
+
 
 make_pred_table_by_edi(scenario_obese_female, edi = "ethnic", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = diff)) + 
@@ -769,19 +779,22 @@ ggplot(ethnic_prop_male, aes(x = ethnic, y=share)) +
   geom_text(aes(x = ethnic, label = label_percent(accuracy = 0.01)(share)), color = "white", vjust = 1.5) +
   labs(title = "Obese Male")
 
+png(here("outputs", "figures", "png", "ethnic_obese_male_robust.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_by_edi(scenario_obese_male, edi = "ethnic", thr = c(0.5)) %>% 
-  filter(rel_freq == 0.5) %>% 
+  filter(rel_freq == "50%") %>% 
   merge(., ethnic_prop_male, by = "ethnic") %>% 
   mutate(tot = male_ob,
          share_inc = tot*share,
          kcal_share = share_inc * diff) %>% 
   ggplot(., aes(x = ethnic, y = kcal_share)) +
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", fill = "#0000ff") +
   geom_text(aes(x = as.factor(ethnic), label = paste(format(round(kcal_share / 1e6, 1), trim = TRUE), "M")), vjust= -1 , color = "white") +
   geom_text(aes(x = as.factor(ethnic), label = label_percent(accuracy = 0.01)(share)), vjust= 1.5 ) +
   scale_y_continuous(labels = label_number_si()) +
-  labs(title = "Obese Male")
-
+  scale_x_discrete(labels = ethnic_lab) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Obese Male",  y = "Total kcal to be reduced", x = "Ethnic Group")
+dev.off()
 
 
 make_pred_table_by_edi(scenario_obese_male, edi = "ethnic", thr = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% 

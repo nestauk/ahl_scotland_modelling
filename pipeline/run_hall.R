@@ -75,13 +75,7 @@ findEI_by_year <- function(year){
   
 }
 
-
-print("Running 1995 data")
-findEI_by_year(1995)
-print("Running 1998 data")
-findEI_by_year(1998)
-print("Running 2003 data")
-findEI_by_year(2003)
-print("Running 2012 data")
-findEI_by_year(2012)
-
+for (x in c(1995, 1998, 2003, 2008, 2011, 2012, 2013)) {
+  print(paste0("Running ", x))
+  findEI_by_year(x)
+}
