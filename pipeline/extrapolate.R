@@ -8,7 +8,6 @@ library(scales)
 library(gridExtra)
 library(magrittr)
 library(hrbrthemes)
-library(gganimate)
 
 
 theme_set(theme_ipsum())
