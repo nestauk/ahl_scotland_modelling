@@ -29,12 +29,17 @@ df <- do.call("rbind" , lapply(list.files(here("outputs", "data"), "child", full
 df_clean <- df %>% 
   filter(!is.na(cint_wt) & bmi > 0 & child_bmi_class > 0) %>% 
   filter(year > 0) %>% 
-  mutate(bmi_class_c = case_when(child_bmi_class == 1 ~ "underweight",
+  mutate(bmi_class_x = case_when(child_bmi_class == 1 ~ "underweight",
                                  (child_bmi_class == 2) ~ "normal",
                                  (child_bmi_class == 3) ~ "overweight",
                                  (child_bmi_class == 4) ~ "obese",
                                  (child_bmi_class == 5) ~ "morbidlyobese",
                                  TRUE ~ "unknown")) %>% 
+  mutate(bmi_class_c = case_when(child_bmi_class == 1 ~ "underweight",
+                                 (child_bmi_class == 2) ~ "normal",
+                                 (child_bmi_class == 3) ~ "overweight",
+                                 (child_bmi_class %in% c(4,5)) ~ "obese",
+                                 TRUE ~ "unknown")) %>%
   mutate(year_c = case_when((year <= 0) ~ year + 2003,
                             (year >=1) ~ year +2007))
 
@@ -179,7 +184,7 @@ rbind(merge(prevalence_all_imd %>%
   mutate(ispred = ifelse(Year>2019,1,0)) %>% 
   ggplot(., aes(x = Year, y = Freq, colour = as.factor(ispred), group = 1)) +
   facet_grid(imd ~ .) +
-  ylim(0,0.2) +
+  ylim(0,0.5) +
   geom_point() +
   geom_line() +
   labs(title = "Children Obesity")

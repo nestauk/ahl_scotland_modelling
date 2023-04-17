@@ -137,7 +137,7 @@ predictions_adult %T>% write_csv(here("outputs", "reports", "obesity_adult.csv")
 
 # plots
 
-rbind(prevalence_female %>% 
+p <- rbind(prevalence_female %>% 
         as.data.frame() %>% 
         filter(bmi_class_c == "obese") %>% 
         mutate(Sex = "Females"),
@@ -162,5 +162,6 @@ rbind(prevalence_female %>%
   geom_line() +
   labs(title = "Adult Obesity")
 
+ggplotly(p)
 
 
