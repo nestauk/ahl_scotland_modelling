@@ -551,17 +551,20 @@ make_pred_table_imd <- function(scenario_df, thresholds =c(0.05, 0.1, 0.2, 0.3, 
 }
 
 # test plots - need to be refined
+png(here("outputs", "figures", "png", "obese_male_edi.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_imd(scenario_obese_male_edi) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = pred, fill = imd)) + 
   geom_bar(stat = "identity") + 
   facet_grid(imd ~ .) + 
   geom_text(aes(x = as.factor(rel_freq), label = label_percent(accuracy = 0.01)(pred)), vjust= 1.5 ) +
   labs(title = "Obese Men")
+dev.off()
 
-
+png(here("outputs", "figures", "png", "obese_female_edi.png"), units = "px", width = 1000, height = 600, res = 100)
 make_pred_table_imd(scenario_obese_female_edi) %>% 
   ggplot(., aes(x = as.factor(rel_freq), y = pred, fill = imd)) + 
   geom_bar(stat = "identity") + 
   facet_grid(imd ~ .) + 
   geom_text(aes(x = as.factor(rel_freq), label = label_percent(accuracy = 0.01)(pred)), vjust= 1.5 ) + 
   labs(title = "Obese Women")
+dev.off()
