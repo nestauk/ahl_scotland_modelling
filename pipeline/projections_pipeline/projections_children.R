@@ -28,18 +28,14 @@ df <- do.call("rbind" , lapply(list.files(here("outputs", "data"), "child", full
 
 df_clean <- df %>% 
   filter(!is.na(cint_wt) & bmi > 0 & child_bmi_class > 0) %>% 
+  filter(age >= 2) %>% 
   filter(year > 0) %>% 
-  mutate(bmi_class_x = case_when(child_bmi_class == 1 ~ "underweight",
-                                 (child_bmi_class == 2) ~ "normal",
-                                 (child_bmi_class == 3) ~ "overweight",
-                                 (child_bmi_class == 4) ~ "obese",
-                                 (child_bmi_class == 5) ~ "morbidly obese",
-                                 TRUE ~ "unknown")) %>% 
   mutate(bmi_class_c = case_when(child_bmi_class == 1 ~ "underweight",
                                  (child_bmi_class == 2) ~ "normal",
                                  (child_bmi_class == 3) ~ "overweight",
-                                 (child_bmi_class %in% c(4,5)) ~ "obese",
-                                 TRUE ~ "unknown")) %>%
+                                 (child_bmi_class == 4) ~ "obese",
+                                 (child_bmi_class == 5) ~ "morbidlyobese",
+                                 TRUE ~ "unknown")) %>% 
   mutate(year_c = case_when((year <= 0) ~ year + 2003,
                             (year >=1) ~ year +2007))
 
@@ -98,6 +94,7 @@ under16_proj <- rbind(proj %>%
 # combine datasets to get prevalence given a bmi class
 
 get_prevalence_children <- function(bmi_class){
+  if (length(bmi_class) == 1){
   p <- rbind(prevalence_female %>% 
                as.data.frame() %>% 
                filter(bmi_class_c == bmi_class) %>% 
@@ -114,8 +111,68 @@ get_prevalence_children <- function(bmi_class){
     merge(under16, by = c("Year", "Sex")) %>% 
     mutate(prevalence = under16*Freq) %>% 
     select(Year, Sex, prevalence)
-  
+    } else {
+      p <- rbind(prevalence_female %>% 
+                   as.data.frame() %>% 
+                   filter(bmi_class_c %in% c(bmi_class)) %>% 
+                   mutate(Sex = "Females") %>% 
+                   group_by(Sex, year_c) %>% 
+                   summarise(Freq = sum(Freq)),
+                 prevalence_male %>% 
+                   as.data.frame() %>% 
+                   filter(bmi_class_c %in% c(bmi_class)) %>% 
+                   mutate(Sex = "Males")%>% 
+                   group_by(Sex, year_c) %>% 
+                   summarise(Freq = sum(Freq)),
+                 prevalence_all %>% 
+                   as.data.frame() %>% 
+                   filter(bmi_class_c %in% c(bmi_class)) %>% 
+                   mutate(Sex = "Persons") %>% 
+                   group_by(Sex, year_c) %>% 
+                   summarise(Freq = sum(Freq))) %>% 
+        mutate(Year = as.numeric(as.character(year_c))) %>% 
+        merge(under16, by = c("Year", "Sex")) %>% 
+        mutate(prevalence = under16*Freq) %>% 
+        select(Year, Sex, prevalence)
+    
+    } 
   return(p)
+}
+
+get_prediction_data <- function(bmi_class){
+  
+  if (length(bmi_class) == 1){
+    t <- rbind(
+      prevalence_all %>% as.data.frame() %>% filter(bmi_class_c == bmi_class) %>% mutate(Sex = "Persons"),
+      prevalence_male %>% as.data.frame() %>% filter(bmi_class_c == bmi_class) %>% mutate(Sex = "Males"),
+      prevalence_female %>% as.data.frame() %>% filter(bmi_class_c == bmi_class) %>% mutate(Sex = "Females")) %>% 
+      rename(Year = year_c) %>% select(Year, Sex, Freq) %>% 
+      mutate(Year = as.numeric(as.character(Year)))
+  } else {
+    t <- rbind(
+      prevalence_all %>% as.data.frame() %>% 
+        filter(bmi_class_c %in% bmi_class) %>% 
+        group_by(year_c) %>% 
+        summarise(Freq = sum(Freq)) %>% 
+        mutate(Sex = "Persons"),
+      prevalence_male %>% 
+        as.data.frame() %>% 
+        filter(bmi_class_c %in% bmi_class) %>% 
+        group_by(year_c) %>% 
+        summarise(Freq = sum(Freq)) %>% 
+        mutate(Sex = "Males"),
+      prevalence_female %>% 
+        as.data.frame() %>% 
+        filter(bmi_class_c %in% bmi_class) %>% 
+        group_by(year_c) %>% 
+        summarise(Freq = sum(Freq)) %>% 
+        mutate(Sex = "Females")) %>% 
+      rename(Year = year_c) %>% 
+      select(Year, Sex, Freq) %>% 
+      mutate(Year = as.numeric(as.character(Year)))
+  }
+  out <- merge(t, under16, by = c("Year", "Sex"))
+  return(out)
 }
 
 
@@ -125,7 +182,9 @@ new <- expand.grid(Year = seq(2020,2030, 1), Sex = unique(get_prevalence_childre
 
 # run regressions for every sex given a bmi class
 
-regressions_children <- get_prevalence_children("obese")  %>% 
+# oveweight
+
+regressions_children_over <- get_prevalence_children("overweight")  %>% 
   nest(data = -Sex) %>% 
   left_join(new, by = "Sex") %>% 
   mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
@@ -133,15 +192,79 @@ regressions_children <- get_prevalence_children("obese")  %>%
 
 
 # extract predictions
-predictions_children <- regressions_children %>% 
+predictions_children_over <- regressions_children_over %>% 
   unnest(augmented) %>% 
   select(Sex, Year, .fitted) %>% 
   merge(., under16_proj, by = c("Year", "Sex")) %>% 
   mutate(Freq = .fitted/under16_proj)
 
 # save csv
-predictions_children %T>% write_csv(here("outputs", "reports", "obesity_children.csv"))
+plyr::rbind.fill(predictions_children_over, get_prediction_data("overweight")) %T>% 
+  write_csv(here("outputs", "reports", "overweight_children.csv"))
 
+
+# obese
+
+regressions_children_obese <- get_prevalence_children("obese")  %>% 
+  nest(data = -Sex) %>% 
+  left_join(new, by = "Sex") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_children_obese <- regressions_children_obese %>% 
+  unnest(augmented) %>% 
+  select(Sex, Year, .fitted) %>% 
+  merge(., under16_proj, by = c("Year", "Sex")) %>% 
+  mutate(Freq = .fitted/under16_proj)
+
+# save csv
+
+plyr::rbind.fill(predictions_children_obese, get_prediction_data("obese")) %T>% 
+  write_csv(here("outputs", "reports", "obesity_children.csv"))
+
+# morbidly obese
+
+regressions_children_morb_obese <- get_prevalence_children("morbidlyobese")  %>% 
+  nest(data = -Sex) %>% 
+  left_join(new, by = "Sex") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_children_morb_obese <- regressions_children_morb_obese %>% 
+  unnest(augmented) %>% 
+  select(Sex, Year, .fitted) %>% 
+  merge(., under16_proj, by = c("Year", "Sex")) %>% 
+  mutate(Freq = .fitted/under16_proj)
+
+# save csv
+
+plyr::rbind.fill(predictions_children_morb_obese, get_prediction_data("morbidlyobese")) %T>% 
+  write_csv(here("outputs", "reports", "morb_obesity_children.csv"))
+
+# obese + morbidly obese
+
+regressions_children_morb_obese_and_morb <- get_prevalence_children("morbidlyobese")  %>% 
+  nest(data = -Sex) %>% 
+  left_join(new, by = "Sex") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_children_morb_obese_and_morb <- regressions_children_morb_obese_and_morb %>% 
+  unnest(augmented) %>% 
+  select(Sex, Year, .fitted) %>% 
+  merge(., under16_proj, by = c("Year", "Sex")) %>% 
+  mutate(Freq = .fitted/under16_proj)
+
+# save csv
+
+plyr::rbind.fill(predictions_children_morb_obese_and_morb, get_prediction_data(c("obese","morbidlyobese"))) %T>% 
+  write_csv(here("outputs", "reports", "obesity_and_morbidly_children.csv"))
 
 # plots
 
@@ -161,7 +284,7 @@ rbind(prevalence_female %>%
   merge(under16, by = c("Year", "Sex")) %>% 
   mutate(prevalence = under16*Freq) %>% 
   select(Year, Sex, Freq) %>% 
-  rbind(., predictions_children %>% select(Year, Sex, Freq)) %>% 
+  rbind(., predictions_children_obese %>% select(Year, Sex, Freq)) %>% 
   mutate(ispred = ifelse(Year>2019,1,0)) %>% 
   ggplot(., aes(x = Year, y = Freq, colour = as.factor(ispred))) +
   facet_grid(Sex ~ .) +

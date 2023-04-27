@@ -127,7 +127,6 @@ year_trend <- all_adult %>%
   mutate(change = (.over16/y2019 - 1)) %>% 
   filter(Year > 2019)
   
-# to be confirmed when NAOMI replies
 
 # data for prediction
 over16_proj_imd <- expand.grid(Year = seq(2020,2030, 1), imd = seq(1,5,1)) %>% 
@@ -141,6 +140,8 @@ over16_proj_imd <- expand.grid(Year = seq(2020,2030, 1), imd = seq(1,5,1)) %>%
 
 get_prevalence_adult_imd <- function(bmi_class){
   
+  if (length(bmi_class) == 1){
+  
   p <- merge(prevalence_all_imd %>% 
                group_by(Year, imd, bmi_class_c) %>% 
                summarise(.Freq = sum(Freq)),
@@ -151,14 +152,61 @@ get_prevalence_adult_imd <- function(bmi_class){
     mutate(Freq = .Freq/.Freq_all) %>% 
     mutate(Sex = "Persons") %>% 
     filter(bmi_class_c == bmi_class)  %>% 
-    merge(all_imd_stacked, by.x = c("Year", "imd", "Sex"), by.y = c("Year", "imd", "Sex")) %>% 
+    merge(all_imd_stacked, by = c("Year", "imd", "Sex")) %>% 
     mutate(prevalence = over16*Freq) %>% 
     mutate(Year = as.numeric(Year)) %>% 
-    select(Year, Sex, imd, prevalence)
+    select(Year, Sex, imd, prevalence)}
+  else {
+    p <- merge(prevalence_all_imd %>% 
+                 group_by(Year, imd, bmi_class_c) %>% 
+                 summarise(.Freq = sum(Freq)),
+               prevalence_all_imd %>% 
+                 group_by(Year, imd) %>% 
+                 summarise(.Freq_all = sum(Freq)),
+               by = c("Year", "imd")) %>% 
+      mutate(Freq = .Freq/.Freq_all) %>% 
+      mutate(Sex = "Persons") %>% 
+      filter(bmi_class_c %in% bmi_class)  %>% 
+      group_by(Year, imd, Sex) %>% 
+      summarise(Freq = sum(Freq)) %>% 
+      merge(all_imd_stacked, by = c("Year", "imd", "Sex")) %>% 
+      mutate(prevalence = over16*Freq) %>% 
+      mutate(Year = as.numeric(as.character(Year))) %>% 
+      select(Year, Sex, imd, prevalence)
+    
+  }
   
   return(p)
 }
 
+get_prediction_data <- function(bmi_class){
+  if (length(bmi_class) == 1){
+t <- merge(prevalence_all_imd %>% 
+        group_by(Year, imd, bmi_class_c) %>% 
+        summarise(.Freq = sum(Freq)),
+      prevalence_all_imd %>% 
+        group_by(Year, imd) %>% 
+        summarise(.Freq_all = sum(Freq)),
+      by = c("Year", "imd")) %>% 
+  mutate(Freq = .Freq/.Freq_all) %>% 
+    filter(bmi_class_c == bmi_class) %>% 
+  select(imd, Year, Freq)}
+  else {
+   t <-  merge(prevalence_all_imd %>% 
+            group_by(Year, imd, bmi_class_c) %>% 
+            summarise(.Freq = sum(Freq)),
+          prevalence_all_imd %>% 
+            group_by(Year, imd) %>% 
+            summarise(.Freq_all = sum(Freq)),
+          by = c("Year", "imd")) %>% 
+      filter(bmi_class_c %in% bmi_class) %>% 
+      group_by(Year, imd) %>% 
+      summarise(Freq = sum(.Freq)/max(.Freq_all))
+  }
+  
+  out <- merge(t, all_imd_stacked %>% filter(Sex == "Persons"), by = c("imd", "Year"))
+  return(out)
+  }
 
 # data for prediction
 new_imd <- expand.grid(Year = seq(2020,2030, 1), imd = unique(get_prevalence_adult_imd("obese")$imd)) %>% nest(new_imd = -imd)
@@ -166,6 +214,27 @@ new_imd <- expand.grid(Year = seq(2020,2030, 1), imd = unique(get_prevalence_adu
 
 # run regressions for every sex given a bmi class
 
+# overweight 
+
+regressions_adult_imd_over <- get_prevalence_adult_imd("overweight")  %>% 
+  nest(data = -imd) %>% 
+  left_join(new_imd, by = "imd") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new_imd, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_adult_imd_over <- regressions_adult_imd_over %>% 
+  unnest(augmented) %>% 
+  select(imd, Year, .fitted) %>% 
+  merge(., over16_proj_imd, by = c("Year", "imd")) %>% 
+  mutate(Freq = .fitted/over16_imd)
+
+# save csv
+plyr::rbind.fill(predictions_adult_imd_over, get_prediction_data("overweight")) %T>% 
+  write_csv(here("outputs", "reports", "overweight_adult_imd.csv"))
+
+# obesity
 regressions_adult_imd <- get_prevalence_adult_imd("obese")  %>% 
   nest(data = -imd) %>% 
   left_join(new_imd, by = "imd") %>% 
@@ -181,12 +250,53 @@ predictions_adult_imd <- regressions_adult_imd %>%
   mutate(Freq = .fitted/over16_imd)
 
 # save csv
-predictions_adult_imd %T>% write_csv(here("outputs", "reports", "obesity_adult_imd.csv"))
+plyr::rbind.fill(predictions_adult_imd, get_prediction_data("obese")) %T>% 
+  write_csv(here("outputs", "reports", "obesity_adult_imd.csv"))
+
+
+# morbidly obesity
+regressions_adult_imd_morb <- get_prevalence_adult_imd("morbidlyobese")  %>% 
+  nest(data = -imd) %>% 
+  left_join(new_imd, by = "imd") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new_imd, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_adult_imd_morb <- regressions_adult_imd_morb %>% 
+  unnest(augmented) %>% 
+  select(imd, Year, .fitted) %>% 
+  merge(., over16_proj_imd, by = c("Year", "imd")) %>% 
+  mutate(Freq = .fitted/over16_imd)
+
+# save csv
+plyr::rbind.fill(predictions_adult_imd_morb, get_prediction_data("morbidlyobese")) %T>% 
+  write_csv(here("outputs", "reports", "morb_obesity_adult_imd.csv"))
+
+# morbidly obesity and obese
+regressions_adult_imd_obese_and_morb <- get_prevalence_adult_imd(c("obese", "morbidlyobese"))  %>% 
+  nest(data = -imd) %>% 
+  left_join(new_imd, by = "imd") %>% 
+  mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
+         augmented = map2(fit, new_imd, ~augment(.x, newdata=.y)))
+
+
+# extract predictions
+predictions_adult_imd_obese_and_morb <- regressions_adult_imd_obese_and_morb %>% 
+  unnest(augmented) %>% 
+  select(imd, Year, .fitted) %>% 
+  merge(., over16_proj_imd, by = c("Year", "imd")) %>% 
+  mutate(Freq = .fitted/over16_imd)
+
+# save csv
+plyr::rbind.fill(predictions_adult_imd_obese_and_morb, get_prediction_data(c("obese", "morbidlyobese"))) %T>% 
+  write_csv(here("outputs", "reports", "obesity_and_morbidly_adult_imd.csv"))
+
 
 
 # plots
 
-rbind(merge(prevalence_all_imd %>% 
+p <- rbind(merge(prevalence_all_imd %>% 
         group_by(Year, imd, bmi_class_c) %>% 
         summarise(.Freq = sum(Freq)),
       prevalence_all_imd %>% 
@@ -204,3 +314,6 @@ rbind(merge(prevalence_all_imd %>%
   geom_point() +
   geom_line() +
   labs(title = "Adult Obesity")
+
+ggplotly(p)
+
