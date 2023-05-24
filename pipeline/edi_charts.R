@@ -497,7 +497,10 @@ make_bmi_prev <- function(year, class, sex_value, edi){
   
   group_2019 <- subset(svy_2019,  sex == sex_value)
   
-  current_prev <- prop.table(svytable(eval(expr(~bmi_class_c + !! ensym(edi))), group_2019),2) %>% as.data.frame() %>% filter(bmi_class_c == class) %>% rename(bmi_class_final = bmi_class_c)
+  current_prev <- prop.table(svytable(eval(expr(~bmi_class_c + !! ensym(edi))), group_2019),2) %>% 
+    as.data.frame() %>% 
+    filter(bmi_class_c == class) %>% 
+    rename(bmi_class_final = bmi_class_c)
   
   year_dat <- all_full[[paste0("full_", year)]]
   
@@ -509,7 +512,9 @@ make_bmi_prev <- function(year, class, sex_value, edi){
   
   group_full <- subset(svy_full,  sex == sex_value)
   
-  scen_prev <- prop.table(svytable(eval(expr(~bmi_class_final + !! ensym(edi))), group_full),2) %>% as.data.frame() %>% filter(bmi_class_final == class)
+  scen_prev <- prop.table(svytable(eval(expr(~bmi_class_final + !! ensym(edi))), group_full),2) %>% 
+    as.data.frame() %>% 
+    filter(bmi_class_final == class)
   
   rbind(current_prev %>% mutate(year_model = 2019),
         scen_prev %>% mutate(year_model = year)) %>% 
@@ -568,3 +573,60 @@ make_pred_table_imd(scenario_obese_female_edi) %>%
   geom_text(aes(x = as.factor(rel_freq), label = label_percent(accuracy = 0.01)(pred)), vjust= 1.5 ) + 
   labs(title = "Obese Women")
 dev.off()
+
+
+# ETHNICYT
+
+# obese male
+scenario_obese_male_ethnic <- do.call("rbind", mapply(make_bmi_prev, 
+                                                   years, 
+                                                   MoreArgs = list(class = "obese", sex_value = "male", edi = "ethnic"), 
+                                                   SIMPLIFY = F) ) %>% distinct() 
+
+# obese female
+scenario_obese_female_ethnic <- do.call("rbind", mapply(make_bmi_prev, 
+                                                     years, 
+                                                     MoreArgs = list(class = "obese", sex_value = "female", edi = "ethnic"), 
+                                                     SIMPLIFY = F) ) %>% distinct()
+
+make_pred_table_ethnic <- function(scenario_df, thresholds =c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)){
+  plot_df <- merge(scenario_df, year_trend, by.x = "year_model", by.y = "year_c")
+  mod <- lm(.Freq ~ poly(rel_freq,1)*ethnic, plot_df)
+  
+  extra <- expand.grid(rel_freq = seq(0, 0.5, 0.01), ethnic = as.factor(seq(1,5,1)))
+  
+  pred <- data.frame(pred = predict(mod, extra), extra) %>% 
+    filter(rel_freq %in% c(0, thresholds))
+  
+  pred$base <- pred[which(pred$rel_freq == 0),1]
+  
+  pred$diff <- pred$pred - pred$base
+  
+  pred$pp <- pred$diff/pred$base
+  
+  return(pred)
+}
+
+# test plots - need to be refined
+png(here("outputs", "figures", "png", "obese_male_ethnic.png"), units = "px", width = 1000, height = 600, res = 100)
+make_pred_table_ethnic(scenario_obese_male_ethnic) %>% 
+  ggplot(., aes(x = as.factor(rel_freq), y = pred, fill = ethnic)) + 
+  geom_bar(stat = "identity") + 
+  facet_grid(ethnic ~ .) + 
+  geom_text(aes(x = as.factor(rel_freq), label = label_percent(accuracy = 0.01)(pred)), vjust= 1.5 ) +
+  labs(title = "Obese Men")
+dev.off()
+
+png(here("outputs", "figures", "png", "obese_female_edi.png"), units = "px", width = 1000, height = 600, res = 100)
+make_pred_table_imd(scenario_obese_female_edi) %>% 
+  ggplot(., aes(x = as.factor(rel_freq), y = pred, fill = imd)) + 
+  geom_bar(stat = "identity") + 
+  facet_grid(imd ~ .) + 
+  geom_text(aes(x = as.factor(rel_freq), label = label_percent(accuracy = 0.01)(pred)), vjust= 1.5 ) + 
+  labs(title = "Obese Women")
+dev.off()
+
+
+# OPTION C (actual)
+
+scenario_obese_female
