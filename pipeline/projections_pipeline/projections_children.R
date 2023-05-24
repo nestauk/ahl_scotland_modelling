@@ -247,7 +247,7 @@ plyr::rbind.fill(predictions_children_morb_obese, get_prediction_data("morbidlyo
 
 # obese + morbidly obese
 
-regressions_children_morb_obese_and_morb <- get_prevalence_children("morbidlyobese")  %>% 
+regressions_children_morb_obese_and_morb <- get_prevalence_children(c("obese", "morbidlyobese"))  %>% 
   nest(data = -Sex) %>% 
   left_join(new, by = "Sex") %>% 
   mutate(fit = map(data, ~lm(prevalence ~ Year, data = .x)),
