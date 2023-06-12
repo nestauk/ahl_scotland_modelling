@@ -26,6 +26,18 @@ women <- rbind(make_pred_table(scenario_over_female, thresholds = c(0.05, 0.1, 0
                make_pred_table(scenario_morb_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "morbidly obese")) %>% 
   mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc))
 
+png(here("outputs", "figures", "png", "female_gif_split.png"), units = "px", width = 1000, height = 800, res = 100)
+women %>% 
+  ggplot(., aes(x = rel_freq, y = diff)) + 
+  geom_bar(stat = "identity", fill = "#0000ff") +
+  ylim(-600,0) +
+  geom_text(aes(x = as.factor(rel_freq), label = label_percent(1)(pp)), vjust= 1.5 ) +
+  geom_text(aes(x = as.factor(rel_freq), label = as.character(round(diff,0))), vjust= -1 , color = "white") +
+  labs(x = "Obesity Prevalence Reduction Compared to 2019 Levels", y = "kcal/day reduction") +
+  facet_wrap(state ~ .)
+dev.off()
+
+
 p <- women %>% 
   ggplot(., aes(x = rel_freq, y = diff)) + 
   geom_bar(stat = "identity", fill = "#0000ff") +
@@ -45,6 +57,17 @@ men <- rbind(make_pred_table(scenario_over_male, thresholds = c(0.05, 0.1, 0.2, 
                make_pred_table(scenario_obese_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "obese"),
                make_pred_table(scenario_morb_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "morbidly obese")) %>% 
   mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc))
+
+png(here("outputs", "figures", "png", "male_gif_split.png"), units = "px", width = 1000, height = 800, res = 100)
+men %>% 
+  ggplot(., aes(x = rel_freq, y = diff)) + 
+  geom_bar(stat = "identity", fill = "#0000ff") +
+  ylim(-600,0) +
+  geom_text(aes(x = as.factor(rel_freq), label = label_percent()(pp)), vjust= 1.5 ) +
+  geom_text(aes(x = as.factor(rel_freq), label = as.character(round(diff,0))), vjust= -1 , color = "white") +
+  labs(x = "Obesity Prevalence Reduction Compared to 2019 Levels", y = "kcal/day reduction") +
+  facet_wrap(state ~ .)
+dev.off()
 
 p <- men %>% 
   ggplot(., aes(x = rel_freq, y = diff)) + 
