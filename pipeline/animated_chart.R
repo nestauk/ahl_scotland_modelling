@@ -5,6 +5,7 @@ library(ggplot2)
 library(gganimate)
 library(hrbrthemes)
 library(gifski)
+library(here)
 
 theme_set(theme_ipsum(base_size = 15, axis_title_size = 15, base_family="Averta"))
 
@@ -15,7 +16,6 @@ ggplot(datasaurus_dozen, aes(x=x, y=y))+
   transition_states(dataset, 3, 1) + 
   ease_aes('cubic-in-out')
 
-library(here)
 
 source(here("pipeline", "extrapolate.R"))
 
@@ -23,8 +23,9 @@ perc = c("0%", "5%", "10%", "20%", "30%", "40%", "50%")
 
 women <- rbind(make_pred_table(scenario_over_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "overweight"),
                make_pred_table(scenario_obese_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "obese"),
-               make_pred_table(scenario_morb_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "morbidly obese")) %>% 
-  mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc))
+               make_pred_table(scenario_morb_female, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "severely obese")) %>% 
+  mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc)) %>% 
+  mutate(state = factor(state, levels = c("overweight", "obese", "severely obese"), labels = c("overweight", "obese", "severely obese")))
 
 png(here("outputs", "figures", "png", "female_gif_split.png"), units = "px", width = 1000, height = 800, res = 100)
 women %>% 
@@ -55,8 +56,9 @@ anim_save(here("outputs", "figures", "gif", "women.gif"), p)
 
 men <- rbind(make_pred_table(scenario_over_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "overweight"),
                make_pred_table(scenario_obese_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "obese"),
-               make_pred_table(scenario_morb_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "morbidly obese")) %>% 
-  mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc))
+               make_pred_table(scenario_morb_male, thresholds = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5)) %>% mutate(state = "severely obese")) %>% 
+  mutate(rel_freq = factor(label_percent()(rel_freq), levels = perc, labels = perc)) %>% 
+  mutate(state = factor(state, levels = c("overweight", "obese", "severely obese"), labels = c("overweight", "obese", "severely obese")))
 
 png(here("outputs", "figures", "png", "male_gif_split.png"), units = "px", width = 1000, height = 800, res = 100)
 men %>% 
