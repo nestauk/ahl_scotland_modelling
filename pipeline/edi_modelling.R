@@ -7,6 +7,7 @@ library(bw)
 library(hrbrthemes)
 library(survey)
 library(scales)
+library(bw)
 
 theme_set(theme_ipsum(base_size = 15, axis_title_size = 15, base_family="Averta"))
 

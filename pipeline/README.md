@@ -7,4 +7,5 @@ To run the pipeline in full run the script `run_pipeline.R`. This script reads t
 * `run_hall.R`: this script runs the Hall model over all the years selected
 * `extrapolate.R`: this script uses the outputs of the Hall model to extrapolate to different levels of obesity prevalence
 * `main_charts.R`: this script produces the charts that summarise the main findings of the analysis
-* `edi_charts.R`: this script produces charts that summarise the findings for breakdowns of background variables
+* `edi_modelling.R`: this script produces charts that summarise the findings for breakdowns of background variables
+* `validation_charts.R`: this script produces charts that validate the model by calculating the BMI distribution under different scenarios
