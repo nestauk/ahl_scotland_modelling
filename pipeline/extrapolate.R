@@ -214,7 +214,67 @@ for (i in 1:length(reports)){
   write_csv(reports[[i]], here("outputs", "reports", paste0(names(reports)[i], '.csv')))
 }
 
+# generate report for all 
+
+svy_2019 <- svydesign(ids = ~df2019$psu,
+                      nest = T,
+                      data = df2019,
+                      strata = df2019$strata,
+                      weights = df2019$int_wt)
+
+share <- svytable(~sex, svy_2019) %>% prop.table()
 
 
+over <- rbind(
+  reports[["scenario_over_male"]] %>% 
+  mutate(share = share[[2]]),
+  reports[["scenario_over_female"]] %>% 
+    mutate(share = share[[1]])) %>% 
+  group_by(rel_freq) %>% 
+  summarise(avg_kcal = sum(diff*share),
+            avg_share = sum(pp*share)) %>% 
+  mutate(bmi_class = "overweight")
 
+
+obese <- rbind(
+  reports[["scenario_obese_male"]] %>% 
+    mutate(share = share[[2]]),
+  reports[["scenario_obese_female"]] %>% 
+    mutate(share = share[[1]])) %>% 
+  group_by(rel_freq) %>% 
+  summarise(avg_kcal = sum(diff*share),
+            avg_share = sum(pp*share)) %>% 
+  mutate(bmi_class = "obese")
+
+
+morb <- rbind(
+  reports[["scenario_morb_male"]] %>% 
+    mutate(share = share[[2]]),
+  reports[["scenario_morb_female"]] %>% 
+    mutate(share = share[[1]])) %>% 
+  group_by(rel_freq) %>% 
+  summarise(avg_kcal = sum(diff*share),
+            avg_share = sum(pp*share)) %>% 
+  mutate(bmi_class = "morb")
+  
+
+excess <- rbind(
+  reports[["scenario_excess_male"]] %>% 
+    mutate(share = share[[2]]),
+  reports[["scenario_excess_female"]] %>% 
+    mutate(share = share[[1]])) %>% 
+  group_by(rel_freq) %>% 
+  summarise(avg_kcal = sum(diff*share),
+            avg_share = sum(pp*share)) %>% 
+  mutate(bmi_class = "excess")
+
+pop <- rbind(
+  reports[["scenario_pop_male"]] %>% 
+    mutate(share = share[[2]]),
+  reports[["scenario_pop_female"]] %>% 
+    mutate(share = share[[1]])) %>% 
+  group_by(rel_freq) %>% 
+  summarise(avg_kcal = sum(diff*share),
+            avg_share = sum(pp*share)) %>% 
+  mutate(bmi_class = "pop")
 
