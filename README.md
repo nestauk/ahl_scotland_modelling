@@ -41,7 +41,7 @@ All outputs are saved in the `outputs` folder (`data`, `reports`, and `figures`)
   │   │   ├── read_clean_save_scotland.R    <- Pre-processing of data
   │   │   ...
   │   ├── pipeline                          <- Holds scripts for all pipeline components
-  |   |   ├── robustness_checks 
+  |   |   ├── projections_pipeline 
   │   ├── utils                             <- Utility functions needed across different parts of the codebase
   │   ...
   ├── inputs
@@ -51,11 +51,12 @@ All outputs are saved in the `outputs` folder (`data`, `reports`, and `figures`)
       ├── data                              <- Holds cleaned data
       ├── reports                           <- Summary tables are saved here
       ├── figures                   
-      ├── └── png                           <- Charts are saved here
+          └── png                           <- Charts are saved here
+              gif                           <- Animated charts are saved here
       ...
 
 ```
 
 ## Ackowledgements
 
-This project relies on the `bw` package which was developed by researchers at the [National Institute of Public Health of Mexico](https://www.insp.mx/insp-overview.html), to which we are really grateful. The package implements the [Dynamic Weight Change model from Hall et al. (2011)](https://pubmed.ncbi.nlm.nih.gov/21872751/) for adults.
+This project relies on the `bw` package which was developed by researchers at the [National Institute of Public Health of Mexico](https://www.insp.mx/insp-overview.html), to which we are really grateful. The package implements the [Dynamic Weight Change model from Hall et al. (2011)](https://pubmed.ncbi.nlm.nih.gov/21872751/) for adults. We are also very grateful to the British Heart Foundation and especially Naomi Herz for her advice regarding the projections work. Our work builds on previously [published work by BHF](https://www.bhf.org.uk/-/media/files/what-we-do/in-your-area-scotland-pages/ncd/scotland-trend-projections.pdf?rev=bf18fb8533f04e419a0e104f642e01bb&hash=48CB25EDB4DAB657DCE0B6F69D50B5ED).
