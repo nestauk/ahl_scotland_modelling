@@ -214,6 +214,7 @@ for (i in 1:length(reports)){
   write_csv(reports[[i]], here("outputs", "reports", paste0(names(reports)[i], '.csv')))
 }
 
+
 # generate report for all 
 
 svy_2019 <- svydesign(ids = ~df2019$psu,
