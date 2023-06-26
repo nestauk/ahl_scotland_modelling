@@ -4,12 +4,24 @@
 .Ruserdata
 .DS_Store
 
+# exclude archive
+/pipeline/archive/
+
+# exclude robustness folder
+/pipeline/robustness_checks/
+
+# exclude charts
+*.png
+*.gif
+*.csv
+*.zip
+
 
 # exclude files within /inputs/data and /outputs/data 
 /inputs/data/*
 /outputs/data/*
 /outputs/figures/*
-/notebooks/*
+/notebooks
 
 !/inputs/data/.gitkeep
 !/outputs/data/.gitkeep
